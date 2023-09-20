@@ -13,6 +13,9 @@ public class PrestigeModCommonConfig {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PRESTIGE_CRATE_ROOT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends Double>> PRESTIGE_CRATE_DROP_CHANCES;
 
+    public static final ForgeConfigSpec.IntValue MAX_PRESTIGE_LEVEL;
+    public static final ForgeConfigSpec.IntValue XP_LEVELS_TO_PRESTIGE;
+
     static {
         BUILDER.push("Configs for Prestige Mod");
 
@@ -29,6 +32,12 @@ public class PrestigeModCommonConfig {
                 .defineList("Prestige Crate Drop Chances",
                         List.of(10.0, 10.0, 20.0, 20.0, 10.0, 10.0, 10.0, 5.0, 2.5, 2.5),
                         d -> d instanceof Double && (double) d >= 0);
+
+        MAX_PRESTIGE_LEVEL = BUILDER.comment("Maximum Prestige Level")
+                .defineInRange("Max Prestige Level", 10, 1, 1000);
+
+        XP_LEVELS_TO_PRESTIGE = BUILDER.comment("XP Levels needed to Prestige")
+                .defineInRange("XP Levels to Prestige", 1000, 0, 50000);
 
         BUILDER.pop();
         SPEC = BUILDER.build();

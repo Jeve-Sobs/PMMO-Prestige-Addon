@@ -15,13 +15,14 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 
 public class GetItemScreen extends Screen {
     private static final Component TITLE =
-            Component.translatable("Prestige Case Opener");
+            Component.translatable("Prestige Crate Opener");
     private static final Component OPEN_BUTTON =
             Component.translatable("Open Case");
 
@@ -60,13 +61,17 @@ public class GetItemScreen extends Screen {
 
     private boolean spinFinished = false;
 
+    private int cratesToOpen;
 
-    public GetItemScreen() {
+
+
+    public GetItemScreen(int cratesToOpen) {
         super(TITLE);
         tickCount = 0;
         this.backgroundImageWidth = 176;
         this.backgroundImageHeight = 166;
         this.isOpening = false;
+        this.cratesToOpen = cratesToOpen;
         super.init();
         //diamondX = this.leftPos + 20;
         //diamondY = this.topPos + 80;
@@ -115,15 +120,26 @@ public class GetItemScreen extends Screen {
     public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         renderBackground(graphics);
         tickCount++;
+        // draw text saying you have x prestige cases left to open this.minecraft.player.getCapability()
         graphics.blit(BACKGROUND_TEXTURE, this.leftPos, this.topPos, 0, 0, this.backgroundImageWidth, this.backgroundImageHeight);
         //System.out.println(mouseX);
         // winning item has ID = 62
+        graphics.drawString(this.font, "To open your prestige crates", this.leftPos + 8, this.topPos + 22, 0x555555, false);
+        graphics.drawString(this.font, "whenever you want use the", this.leftPos + 8, this.topPos + 31, 0x555555, false);  // Change coordinates as needed
+        graphics.drawString(this.font, "command /openPrestigeCrate", this.leftPos + 8, this.topPos + 40, 0x555555, false);  // Change coordinates as needed
+        graphics.drawString(this.font, "You have "+cratesToOpen+ " crates left", this.leftPos + 8, this.topPos + 118, 0x555555, false);  // Change coordinates as needed
         for(int i = 0; i < caseContents.length; i++){
             graphics.blit(caseContents[i].getTEXTURE(),caseContents[i].getX(), this.topPos+78 , 0, 0, ITEM_SIZE, ITEM_SIZE,ITEM_SIZE,ITEM_SIZE);
             if(isOpening){
+                if (tickCount % 6 == 0) {  // Check if the tick count is divisible by 3.
+                    this.minecraft.player.playSound(SoundEvents.TRIPWIRE_CLICK_ON, 1.0F, 1.0F);  // Play the note block pling sound as an example.
+                }
                 if(tickCount > 360){
                     spinSpeed = 0;
                     spinFinished = true;
+                    isOpening = false;
+                    cratesToOpen--;
+                    this.minecraft.player.playSound(SoundEvents.PLAYER_LEVELUP, 1.0F, 1.0F);  // Play the trident throw sound as an example.
                 }
 
                 caseContents[i].setX(caseContents[i].getX()+spinSpeed);

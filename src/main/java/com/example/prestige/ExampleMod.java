@@ -26,6 +26,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(ExampleMod.MODID)
@@ -66,13 +67,23 @@ public class ExampleMod
         event.getDispatcher().register(Commands.literal("openPrestigeCrate").executes(ExampleMod::openPrestigeCrateCommand));
 
         event.getDispatcher().register(Commands.literal("resetPrestigeLevel")
+                .requires(commandSource -> commandSource.hasPermission(2)) // Restricts command to OP level 2 or higher
                 .then(Commands.argument(TARGET_ARG, EntityArgument.player()) // Add the target argument
                         .executes(ExampleMod::ResetCommand)));
     }
 
     public static int openPrestigeCrateCommand(CommandContext<CommandSourceStack> context) throws CommandSyntaxException{
         ServerPlayer player = context.getSource().getPlayer();
-        NetworkPackets.sendToPlayer(new CP_OpenPrestigeScreen(),player);
+        player.getCapability(PlayerPrestigeProvider.PLAYER_PRESTIGE).ifPresent(prestige -> {
+            if (prestige.getPrestigeCrates() > 0) {
+                NetworkPackets.sendToPlayer(new CP_OpenPrestigeScreen(prestige.getPrestigeCrates()),player);
+            } else {
+                player.sendSystemMessage(Component.literal("You do not have any prestige crates to open")
+                        .withStyle(ChatFormatting.AQUA));
+            }
+
+        });
+
         return 0;
     }
     public static int ResetCommand(CommandContext<CommandSourceStack> context) throws CommandSyntaxException{
@@ -84,6 +95,7 @@ public class ExampleMod
 
         targetPlayer.getCapability(PlayerPrestigeProvider.PLAYER_PRESTIGE).ifPresent(prestige -> {
             prestige.setLevel(0);
+            prestige.setPrestigeCrates(0);
             targetPlayer.sendSystemMessage(Component.literal("Your prestige level has been reset to 0" )
                     .withStyle(ChatFormatting.AQUA));
             targetPlayer.refreshDisplayName();
@@ -94,6 +106,7 @@ public class ExampleMod
 
     public static int PrestigeCommand(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         // Send a request to the server to increment the prestige level for the command issuer
+        AtomicInteger casesToOPen = new AtomicInteger();
         Core core = Core.get(LogicalSide.SERVER);
         IDataStorage data = Core.get(LogicalSide.SERVER).getData();
         ServerPlayer player = context.getSource().getPlayer();
@@ -101,28 +114,32 @@ public class ExampleMod
                 .getXpMap(player.getUUID())
                 .values()
                 .stream().mapToInt(core.getData()::getLevelFromXP).sum();
-        if (totalLevels >= 100){
+        if (totalLevels >= PrestigeModCommonConfig.XP_LEVELS_TO_PRESTIGE.get()){
             player.getCapability(PlayerPrestigeProvider.PLAYER_PRESTIGE).ifPresent(prestige -> {
-                prestige.setLevel(prestige.getLevel()+1);
-                player.sendSystemMessage(Component.literal("You have successfully prestiged to level " +prestige.getLevel())
-                        .withStyle(ChatFormatting.AQUA));
-                player.refreshDisplayName();
-                context.getSource().getPlayer().refreshTabListName();
-                for (ServerPlayer otherPlayer : player.server.getPlayerList().getPlayers()) {
-                    if (!otherPlayer.equals(player)) { // Ensure it's not the player who just prestiged
-                        otherPlayer.sendSystemMessage(Component.literal(player.getDisplayName().getString() + " has just prestiged to level " + prestige.getLevel()).withStyle(ChatFormatting.GOLD));
+                if(prestige.getLevel() < PrestigeModCommonConfig.MAX_PRESTIGE_LEVEL.get()){
+                    prestige.setLevel(prestige.getLevel()+1);
+                    prestige.setPrestigeCrates(prestige.getPrestigeCrates()+1);
+                    player.sendSystemMessage(Component.literal("You have successfully prestiged to level " +prestige.getLevel())
+                            .withStyle(ChatFormatting.AQUA));
+                    player.refreshDisplayName();
+                    context.getSource().getPlayer().refreshTabListName();
+                    casesToOPen.set(prestige.getPrestigeCrates());
+                    for (ServerPlayer otherPlayer : player.server.getPlayerList().getPlayers()) {
+                        if (!otherPlayer.equals(player)) { // Ensure it's not the player who just prestiged
+                            otherPlayer.sendSystemMessage(Component.literal(player.getDisplayName().getString() + " has just prestiged to level " + prestige.getLevel()).withStyle(ChatFormatting.GOLD));
+                        }
                     }
+                    data.setXpMap(player.getUUID(), new HashMap<>());
+                    Networking.sendToClient(new CP_SyncData_ClearXp(), player);
+                    NetworkPackets.sendToPlayer(new CP_OpenPrestigeScreen(casesToOPen.get()),player);
+                } else{
+                    player.sendSystemMessage(Component.literal("You have reached the max prestige level of "+PrestigeModCommonConfig.MAX_PRESTIGE_LEVEL.get())
+                            .withStyle(ChatFormatting.AQUA));
                 }
+
             });
-
-            data.setXpMap(player.getUUID(), new HashMap<>());
-            Networking.sendToClient(new CP_SyncData_ClearXp(), player);
-            NetworkPackets.sendToPlayer(new CP_OpenPrestigeScreen(),player);
-            //ItemStack itemStack = new ItemStack(Items.DIAMOND, 1); // Change Items.DIAMOND to whatever item you want.
-            //player.addItem(itemStack);
-
         } else{
-            player.sendSystemMessage(Component.literal("You need "+100+" levels to prestige, you have "+totalLevels)
+            player.sendSystemMessage(Component.literal("You need "+PrestigeModCommonConfig.XP_LEVELS_TO_PRESTIGE.get()+" levels to prestige, you have "+totalLevels)
                     .withStyle(ChatFormatting.AQUA));
         }
 
