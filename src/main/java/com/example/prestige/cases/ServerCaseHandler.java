@@ -7,8 +7,12 @@ import com.example.prestige.networking.clientPackets.CP_SetCaseItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+
+import java.util.Map;
 
 public class  ServerCaseHandler {
     public static void openCase(ServerPlayer player) {
@@ -19,15 +23,34 @@ public class  ServerCaseHandler {
 
     }
     public static void giveItem(ServerPlayer player) {
-
         player.getCapability(PlayerPrestigeProvider.PLAYER_PRESTIGE).ifPresent(prestige -> {
             if (prestige.getPrestigeCrates() > 0) {
                 ItemStack toGive = PrestigeModCommonConfig.getPrestigeCrateItems()[prestige.getPrestigeItemIndex()];
+                Item givenItem = toGive.getItem();
 
-                // Check if the player's inventory can add the item
+                // Apply Enchantments to Tools, Weapons, and Armor
+                Map<Enchantment, Integer> existingEnchantments = EnchantmentHelper.getEnchantments(toGive);
+                if (givenItem instanceof SwordItem || givenItem instanceof AxeItem || givenItem instanceof PickaxeItem || givenItem instanceof ShovelItem || givenItem instanceof HoeItem || givenItem instanceof ArmorItem) {
+                    existingEnchantments.put(Enchantments.UNBREAKING, 10);
+                    existingEnchantments.put(Enchantments.MENDING, 1); // Mending does not have levels
+
+                    if (givenItem instanceof SwordItem || givenItem instanceof AxeItem) {
+                        existingEnchantments.put(Enchantments.SHARPNESS, 7);
+                    }
+
+                    if (givenItem instanceof PickaxeItem || givenItem instanceof ShovelItem || givenItem instanceof HoeItem) {
+                        existingEnchantments.put(Enchantments.BLOCK_EFFICIENCY, 7);
+                    }
+
+                    if (givenItem instanceof ArmorItem) {
+                        existingEnchantments.put(Enchantments.ALL_DAMAGE_PROTECTION, 7);
+                    }
+
+                    EnchantmentHelper.setEnchantments(existingEnchantments, toGive);
+                }
+
+                // Adding to inventory or dropping at player location
                 boolean wasAddedToInventory = player.getInventory().add(toGive);
-
-                // If the item wasn't added, drop it at the player's location
                 if (!wasAddedToInventory) {
                     player.drop(toGive, false);
                 }
@@ -40,5 +63,8 @@ public class  ServerCaseHandler {
             }
         });
     }
+
+
+
 
 }

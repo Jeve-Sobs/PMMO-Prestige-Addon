@@ -1,8 +1,10 @@
 package com.example.prestige.config;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 
@@ -20,21 +22,31 @@ public class PrestigeModCommonConfig {
         BUILDER.push("Configs for Prestige Mod");
 
         PRESTIGE_CRATE_ROOT = BUILDER.comment("List of items in the Prestige Crate")
-                .defineList("Prestige Crate Items",
-                        List.of("minecraft:diamond", "minecraft:diamond",
-                                "minecraft:coal", "minecraft:coal",
-                                "minecraft:diamond", "minecraft:emerald",
-                                "minecraft:diamond", "minecraft:coal",
-                                "minecraft:diamond", "minecraft:emerald"),
+                .defineList("Prestige Crate Items", List.of(
+                                "twilightdelight:teardrop_sword",
+                                "lost_aether_content:phoenix_pickaxe",
+                                "lost_aether_content:phoenix_sword",
+                                "lost_aether_content:phoenix_axe",
+                                "lost_aether_content:phoenix_shovel",
+                                "deep_aether:stratus_sword",
+                                "deeperdarker:warden_helmet",
+                                "deeperdarker:warden_chestplate",
+                                "deeperdarker:warden_leggings",
+                                "deeperdarker:warden_boots",
+                                "deeperdarker:warden_sword",
+                                "deep_aether:stratus_axe",
+                                "deeperdarker:warden_axe",
+                                "deeperdarker:warden_shovel",
+                                "minecraft:coal",
+                                "deep_aether:stratus_sword"),
                         s -> s instanceof String);
 
         PRESTIGE_CRATE_DROP_CHANCES = BUILDER.comment("Drop chances for items in the Prestige Crate (must total to 100%)")
-                .defineList("Prestige Crate Drop Chances",
-                        List.of(10.0, 10.0, 20.0, 20.0, 10.0, 10.0, 10.0, 5.0, 2.5, 2.5),
+                .defineList("Prestige Crate Drop Chances", List.of(6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25, 6.25),
                         d -> d instanceof Double && (double) d >= 0);
 
         MAX_PRESTIGE_LEVEL = BUILDER.comment("Maximum Prestige Level")
-                .defineInRange("Max Prestige Level", 10, 1, 1000);
+                .defineInRange("Max Prestige Level", 20, 1, 1000);
 
         XP_LEVELS_TO_PRESTIGE = BUILDER.comment("XP Levels needed to Prestige")
                 .defineInRange("XP Levels to Prestige", 1000, 0, 50000);
@@ -47,18 +59,7 @@ public class PrestigeModCommonConfig {
     public static ItemStack[] getPrestigeCrateItems() {
         List<String> items = (List<String>) PRESTIGE_CRATE_ROOT.get();
         return items.stream().map(item -> {
-            switch (item) {
-                case "minecraft:diamond":
-                    return new ItemStack(Items.DIAMOND, 1);
-                case "minecraft:coal":
-                    return new ItemStack(Items.COAL, 1);
-                case "minecraft:lapis":
-                    return new ItemStack(Items.LAPIS_LAZULI, 1);
-                case "minecraft:emerald":
-                    return new ItemStack(Items.EMERALD, 1);
-                default:
-                    return ItemStack.EMPTY;
-            }
+            return new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation(item)),1);
         }).toArray(ItemStack[]::new);
     }
 

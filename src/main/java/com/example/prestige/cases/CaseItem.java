@@ -2,10 +2,20 @@ package com.example.prestige.cases;
 
 import com.example.prestige.ExampleMod;
 import com.example.prestige.config.PrestigeModCommonConfig;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.joml.Matrix4f;
+
 
 import java.util.Random;
 
@@ -25,7 +35,8 @@ public class CaseItem {
     public CaseItem(ItemStack item){
         this.caseItem = item;
         this.itemId = ++ID_COUNTER;
-        TEXTURE = new ResourceLocation("minecraft", "textures/item/"+item.getItem().getName(item).getString().toLowerCase()+".png");
+        TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
+        //TEXTURE = new ResourceLocation("minecraft", "textures/item/"+item.getItem().getName(item).getString().toLowerCase()+".png");
         this.x = 0;
         this.y = 0;
         //ItemStack itemStack = new ItemStack(Items.DIAMOND, 1); // Change Items.DIAMOND to whatever item you want.
@@ -34,14 +45,26 @@ public class CaseItem {
     public CaseItem() {
         this.itemId = ++ID_COUNTER;
         chooseRandomItem();
-        TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
+        this.setTexture();
+        //TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
+        //TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
+        System.out.println(TEXTURE);
         this.x = 0;
         this.y = 0;
     }
 
+    private void setTexture() {
+
+        ResourceLocation registryName = ForgeRegistries.ITEMS.getKey(caseItem.getItem());
+        String namespace = registryName.getNamespace();
+        String path = registryName.getPath();
+        TEXTURE = new ResourceLocation(namespace, "textures/item/" + path + ".png");
+    }
+
     public void setTextureFromIndex(int index){
         this.caseItem = PrestigeModCommonConfig.getPrestigeCrateItems()[index];
-        TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
+        this.setTexture();
+        //TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
     }
 
     private void chooseRandomItem() {
@@ -61,7 +84,8 @@ public class CaseItem {
 
     public void refreshItem(){
         chooseRandomItem();
-        TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
+        this.setTexture();
+        //TEXTURE = new ResourceLocation("minecraft", "textures/item/" + caseItem.getItem().getName(caseItem).getString().toLowerCase() + ".png");
         this.itemId = ++ID_COUNTER;
     }
 
@@ -83,6 +107,30 @@ public class CaseItem {
     public void setY(int y) {
         this.y = y;
     }
+
+    /*
+    public void test(){
+        ItemStack item = new ItemStack(Blocks.DIAMOND_BLOCK);
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+        PoseStack poseStack = new PoseStack();
+        poseStack.pushPose();
+        poseStack.translate(150, 150, 100.0F);
+        poseStack.scale(16.0F, 16.0F, 16.0F); // Scaling
+
+        float angle = (System.currentTimeMillis() / 100) % 360; // Rotation Angle
+        Matrix4f m = new PoseStack().last().pose();
+
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        //Minecraft.getInstance().getItemRenderer().renderStatic();
+        bufferSource.endBatch();
+        poseStack.popPose();
+        RenderSystem.disableBlend();
+    }
+     */
 
     public void movePos(){
         this.x++;

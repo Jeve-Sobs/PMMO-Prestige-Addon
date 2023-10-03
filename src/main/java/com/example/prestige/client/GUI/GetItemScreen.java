@@ -63,6 +63,8 @@ public class GetItemScreen extends Screen {
 
     private int cratesToOpen;
 
+    private boolean initDisplayItems = false;
+
 
 
     public GetItemScreen(int cratesToOpen) {
@@ -80,7 +82,6 @@ public class GetItemScreen extends Screen {
 
     public static void setWinningIndex(int index){
         winningIndex = index;
-        System.out.println("THIS LINE");
     }
 
     @Override
@@ -131,7 +132,7 @@ public class GetItemScreen extends Screen {
         for(int i = 0; i < caseContents.length; i++){
             graphics.blit(caseContents[i].getTEXTURE(),caseContents[i].getX(), this.topPos+78 , 0, 0, ITEM_SIZE, ITEM_SIZE,ITEM_SIZE,ITEM_SIZE);
             if(isOpening){
-                if (tickCount % 6 == 0) {  // Check if the tick count is divisible by 3.
+                if (tickCount % 10 == 0) {  // Check if the tick count is divisible by 3.
                     this.minecraft.player.playSound(SoundEvents.TRIPWIRE_CLICK_ON, 1.0F, 1.0F);  // Play the note block pling sound as an example.
                 }
                 if(tickCount > 360){
